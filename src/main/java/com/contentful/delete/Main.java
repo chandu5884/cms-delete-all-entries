@@ -22,10 +22,10 @@ public class Main {
     CDAClient cdaClient = CDAClient.builder().setToken("CDA Token here").setSpace(spaceId).setEnvironment(environmentId).build();
 
 
-    getEntries(cdaClient, cmaClient);
+    deleteEntries(cdaClient, cmaClient);
   }
 
-  private static void getEntries(CDAClient cdaClient, CMAClient cmaClient) {
+  private static void deleteEntries(CDAClient cdaClient, CMAClient cmaClient) {
 
     int skip = 0;
     int totalEntries = Integer.MAX_VALUE;
