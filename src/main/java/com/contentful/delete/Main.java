@@ -6,43 +6,67 @@ import com.contentful.java.cda.CDAEntry;
 import com.contentful.java.cma.CMAClient;
 import com.contentful.java.cma.model.CMAEntry;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class Main {
 
   public static void main(String[] args) {
-    String spaceId = "Space Id here";
-    String environmentId = "env id here";
+    Properties properties = new Properties();
+
+    String cmaToken = "";
+    String cdaToken = "";
+    String spaceId = "";
+    String environmentId = "";
+
+    try (InputStream input = Main.class.getClassLoader().getResourceAsStream("application.properties")) {
+      if (input == null) {
+        System.out.println("Sorry, unable to find app.properties");
+        return;
+      }
+
+      properties.load(input);
+
+      cmaToken = properties.getProperty("cma.token");
+      cdaToken = properties.getProperty("cda.token");
+      spaceId = properties.getProperty("space.id");
+      environmentId = properties.getProperty("environment.id");
+
+    } catch (IOException e) {
+      System.out.println("Error loading application properties");
+    }
+
     CMAClient cmaClient = new CMAClient.Builder()
-        .setAccessToken("Set CMA Token Here")
+        .setAccessToken(cmaToken)
         .setSpaceId(spaceId)
         .setEnvironmentId(environmentId)
         .build();
-    CDAClient cdaClient = CDAClient.builder().setToken("CDA Token here").setSpace(spaceId).setEnvironment(environmentId).build();
+    CDAClient cdaClient = CDAClient.builder().setToken(cdaToken).setSpace(spaceId).setEnvironment(environmentId).build();
 
 
-    deleteEntries(cdaClient, cmaClient);
+    getEntries(cdaClient, cmaClient);
   }
 
-  private static void deleteEntries(CDAClient cdaClient, CMAClient cmaClient) {
+  private static void getEntries(CDAClient cdaClient, CMAClient cmaClient) {
 
     int skip = 0;
-    int totalEntries = Integer.MAX_VALUE;
+    int batchSize = 100; // Define the limit for each fetch
+    int totalEntries;
 
-    while (skip < totalEntries) {
+    do {
       // Fetch a page of entries
       CDAArray cdaArrayPage = cdaClient
           .fetch(CDAEntry.class)
           .include(1)
-          .limit(100)
+          .limit(batchSize)
           .skip(skip)
           .all();
 
-      if (totalEntries == Integer.MAX_VALUE) {
-        totalEntries = cdaArrayPage.total();
-        System.out.println("Total entries to process: " + totalEntries);
-      }
+      totalEntries = cdaArrayPage.total();
+      System.out.println("Total entries to process: " + totalEntries);
 
       List<CDAEntry> entries = cdaArrayPage.items().stream()
           .filter(resource -> resource instanceof CDAEntry)
@@ -61,13 +85,14 @@ public class Main {
           }
           System.out.println("Deleting entry with ID: " + entryId);
           cmaClient.entries().delete(cmaEntry);
-
         }
       }
 
-      skip += 100;
-    }
+      skip += entries.size(); // Increment by actual processed entries, not batch size
+
+    } while (skip < totalEntries); // Continue until all entries are processed
 
     System.out.println("All entries processed.");
   }
+
 }
