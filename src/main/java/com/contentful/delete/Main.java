@@ -53,11 +53,10 @@ public class Main {
   private static void getEntries(CDAClient cdaClient, CMAClient cmaClient) {
 
     int skip = 0;
-    int batchSize = 100; // Define the limit for each fetch
+    int batchSize = 100;
     int totalEntries;
 
     do {
-      // Fetch a page of entries
       CDAArray cdaArrayPage = cdaClient
           .fetch(CDAEntry.class)
           .include(1)
@@ -93,9 +92,9 @@ public class Main {
         }
       }
 
-      skip += entries.size(); // Increment by actual processed entries, not batch size
+      skip += entries.size();
 
-    } while (skip < totalEntries); // Continue until all entries are processed
+    } while (skip < totalEntries);
 
     System.out.println("All entries processed.");
   }
