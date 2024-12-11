@@ -73,6 +73,11 @@ public class Main {
           .map(resource -> (CDAEntry) resource)
           .collect(Collectors.toList());
 
+      if (entries.isEmpty()) {
+        System.out.println("No more entries found. Exiting.");
+        break;
+      }
+
       for (CDAEntry cdaEntry : entries) {
         String entryId = cdaEntry.id();
 
